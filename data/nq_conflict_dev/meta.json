@@ -1,0 +1,35 @@
+{
+  "dataset": "florin-hf/nq_open_gold",
+  "split": "validation",
+  "seed": 7,
+  "n_instances": 300,
+  "n_corpus": 61500,
+  "n_distractors": 60900,
+  "scenarios": {
+    "no_conflict": 75,
+    "balanced_conflict": 75,
+    "misinfo_single": 75,
+    "misinfo_majority": 75
+  },
+  "answer_types": {
+    "other": 60,
+    "year": 20,
+    "proper": 201,
+    "date": 6,
+    "quantity": 4,
+    "number": 9
+  },
+  "substitute_methods": {
+    "pool": 45,
+    "llm": 216,
+    "rule": 39
+  },
+  "skipped": {
+    "filtered": 13,
+    "answer_not_in_passage": 2,
+    "llm_sub_invalid->pool": 54,
+    "no_substitute": 28,
+    "gold_survives_edit": 1,
+    "background_passages_dropped_as_leaks": 638
+  }
+}

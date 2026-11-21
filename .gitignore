@@ -1,0 +1,49 @@
+# --- Python / environments ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Secrets / local config ---
+.env
+.env.*
+*.key
+.claude/settings.local.json
+
+# --- OS / editor files ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- Benchmark corpora: the local copies are truncated (13k of ~60k passages each).
+# Remove this line once the complete files are in place.
+data/*/corpus.jsonl
+
+# --- Regenerable caches (rebuilt automatically on first run) ---
+# BM25 index (.pkl) and dense embeddings (.npy) for each corpus
+data/*/cache/
+# per-stage evaluation checkpoints
+runs/*/cache/
+runs/*.log
+# downloaded model weights, if a local HF cache is ever pointed inside the repo
+.hf_cache/
+models/
+
+# --- LaTeX build by-products (report.pdf itself is committed) ---
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz

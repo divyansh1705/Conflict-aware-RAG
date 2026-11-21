@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conflict-aware-rag"
+version = "0.1.0"
+description = "RAG that detects contradictions between retrieved passages with NLI and arbitrates evidence by stance and source reliability"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.1",
+    "transformers>=4.45",
+    "datasets>=2.18",
+    "numpy>=1.24",
+    "tqdm",
+    "accelerate",
+    "sentencepiece",
+]
+
+[project.optional-dependencies]
+claude = ["anthropic>=2.6"]
+quant = ["bitsandbytes"]  # 4-bit LLM weights on small NVIDIA GPUs
+dev = ["pytest"]
+
+[project.scripts]
+carag = "carag.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+carag = ["web/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

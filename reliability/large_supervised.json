@@ -1,0 +1,10 @@
+{
+  "bbc": 0.768,
+  "britannica": 0.788,
+  "content-farm": 0.224,
+  "forum": 0.133,
+  "personal-blog": 0.186,
+  "reuters": 0.778,
+  "social-media": 0.219,
+  "wikipedia": 0.37
+}

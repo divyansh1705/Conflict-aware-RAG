@@ -1,0 +1,199 @@
+{
+  "judge": "hf:Qwen/Qwen2.5-7B-Instruct",
+  "systems": {
+    "vanilla": {
+      "n_total": 1000,
+      "n_evidence_complete": 791,
+      "accuracy_answerable": 0.5472636815920398,
+      "misled_rate_answerable": 0.14925373134328357,
+      "handling_micro": 0.3919089759797724,
+      "handling_macro": 0.38521030906966547,
+      "conflict_detection": {
+        "precision": 0.7777777777777778,
+        "recall": 0.19964349376114082,
+        "f1": 0.3177304964539007
+      },
+      "by_scenario": {
+        "balanced_conflict": {
+          "n": 188,
+          "accuracy": 0.5691489361702128,
+          "handled_ok": 0.06914893617021277,
+          "misled": 0.11170212765957446,
+          "flagged": 0.2553191489361702,
+          "both_mentioned": 0.06914893617021277
+        },
+        "misinfo_majority": {
+          "n": 189,
+          "accuracy": 0.43386243386243384,
+          "handled_ok": 0.3968253968253968,
+          "misled": 0.328042328042328,
+          "flagged": 0.15873015873015872,
+          "both_mentioned": 0.037037037037037035
+        },
+        "misinfo_single": {
+          "n": 184,
+          "accuracy": 0.5434782608695652,
+          "handled_ok": 0.47282608695652173,
+          "misled": 0.15217391304347827,
+          "flagged": 0.18478260869565216,
+          "both_mentioned": 0.07065217391304347
+        },
+        "no_conflict": {
+          "n": 196,
+          "accuracy": 0.6530612244897959,
+          "handled_ok": 0.6020408163265306,
+          "misled": 0.0,
+          "flagged": 0.14285714285714285,
+          "both_mentioned": 0.00510204081632653
+        }
+      }
+    },
+    "prompted": {
+      "n_total": 1000,
+      "n_evidence_complete": 791,
+      "accuracy_answerable": 0.867330016583748,
+      "misled_rate_answerable": 0.04643449419568822,
+      "handling_micro": 0.35145385587863465,
+      "handling_macro": 0.3538298606522473,
+      "conflict_detection": {
+        "precision": 0.7512776831345827,
+        "recall": 0.786096256684492,
+        "f1": 0.7682926829268293
+      },
+      "by_scenario": {
+        "balanced_conflict": {
+          "n": 188,
+          "accuracy": 0.8936170212765957,
+          "handled_ok": 0.7127659574468085,
+          "misled": 0.0425531914893617,
+          "flagged": 0.7819148936170213,
+          "both_mentioned": 0.7127659574468085
+        },
+        "misinfo_majority": {
+          "n": 189,
+          "accuracy": 0.8518518518518519,
+          "handled_ok": 0.1746031746031746,
+          "misled": 0.10052910052910052,
+          "flagged": 0.798941798941799,
+          "both_mentioned": 0.6772486772486772
+        },
+        "misinfo_single": {
+          "n": 184,
+          "accuracy": 0.8695652173913043,
+          "handled_ok": 0.20652173913043478,
+          "misled": 0.043478260869565216,
+          "flagged": 0.7771739130434783,
+          "both_mentioned": 0.6630434782608695
+        },
+        "no_conflict": {
+          "n": 196,
+          "accuracy": 0.8826530612244898,
+          "handled_ok": 0.32142857142857145,
+          "misled": 0.00510204081632653,
+          "flagged": 0.6326530612244898,
+          "both_mentioned": 0.5
+        }
+      }
+    },
+    "conflict_aware": {
+      "n_total": 1000,
+      "n_evidence_complete": 791,
+      "accuracy_answerable": 0.7479270315091211,
+      "misled_rate_answerable": 0.02155887230514096,
+      "handling_micro": 0.5347661188369153,
+      "handling_macro": 0.5478931859515314,
+      "conflict_detection": {
+        "precision": 0.831041257367387,
+        "recall": 0.7540106951871658,
+        "f1": 0.7906542056074766
+      },
+      "by_scenario": {
+        "balanced_conflict": {
+          "n": 188,
+          "accuracy": 0.723404255319149,
+          "handled_ok": 0.4308510638297872,
+          "misled": 0.06914893617021277,
+          "flagged": 0.6968085106382979,
+          "both_mentioned": 0.4308510638297872
+        },
+        "misinfo_majority": {
+          "n": 189,
+          "accuracy": 0.8095238095238095,
+          "handled_ok": 0.6666666666666666,
+          "misled": 0.021164021164021163,
+          "flagged": 0.798941798941799,
+          "both_mentioned": 0.14285714285714285
+        },
+        "misinfo_single": {
+          "n": 184,
+          "accuracy": 0.7663043478260869,
+          "handled_ok": 0.6195652173913043,
+          "misled": 0.04891304347826087,
+          "flagged": 0.7663043478260869,
+          "both_mentioned": 0.14673913043478262
+        },
+        "no_conflict": {
+          "n": 196,
+          "accuracy": 0.7040816326530612,
+          "handled_ok": 0.4744897959183674,
+          "misled": 0.0,
+          "flagged": 0.3520408163265306,
+          "both_mentioned": 0.15306122448979592
+        }
+      }
+    },
+    "arbitration_only": {
+      "n_total": 1000,
+      "n_evidence_complete": 791,
+      "accuracy_answerable": 0.7131011608623549,
+      "misled_rate_answerable": 0.02155887230514096,
+      "handling_micro": 0.5183312262958281,
+      "handling_macro": 0.527703092234941,
+      "conflict_detection": {
+        "precision": 0.8452914798206278,
+        "recall": 0.6720142602495544,
+        "f1": 0.7487586891757696
+      },
+      "by_scenario": {
+        "balanced_conflict": {
+          "n": 188,
+          "accuracy": 0.6595744680851063,
+          "handled_ok": 0.3829787234042553,
+          "misled": 0.05851063829787234,
+          "flagged": 0.6276595744680851,
+          "both_mentioned": 0.3829787234042553
+        },
+        "misinfo_majority": {
+          "n": 189,
+          "accuracy": 0.7566137566137566,
+          "handled_ok": 0.6402116402116402,
+          "misled": 0.021164021164021163,
+          "flagged": 0.7037037037037037,
+          "both_mentioned": 0.1164021164021164
+        },
+        "misinfo_single": {
+          "n": 184,
+          "accuracy": 0.7119565217391305,
+          "handled_ok": 0.5978260869565217,
+          "misled": 0.04891304347826087,
+          "flagged": 0.6847826086956522,
+          "both_mentioned": 0.11413043478260869
+        },
+        "no_conflict": {
+          "n": 196,
+          "accuracy": 0.7091836734693877,
+          "handled_ok": 0.4897959183673469,
+          "misled": 0.0,
+          "flagged": 0.28061224489795916,
+          "both_mentioned": 0.15306122448979592
+        }
+      }
+    }
+  },
+  "agreement": {
+    "correct": 0.8059418457648546,
+    "misled": 0.9734513274336283,
+    "flagged": 0.8896965865992414,
+    "handled_ok": 0.8441845764854614
+  }
+}

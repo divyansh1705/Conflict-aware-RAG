@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conflict-Aware RAG</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22 fill=%22%232f5d8a%22/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e2e0d8;
+  --accent: #2f5d8a; --ok: #2e7d5b; --warn: #b7791f; --bad: #b3413a;
+  --g0: #2f5d8a; --g1: #b3413a; --g2: #7a5ea8; --g3: #3b8a86; --none: #c9c6bc;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #161615; --panel: #1f1f1d; --ink: #ecebe6; --muted: #9c9a93; --line: #33322f;
+          --accent: #7fb0de; --ok: #6cc39a; --warn: #e0b060; --bad: #e58a83;
+          --g0: #7fb0de; --g1: #e58a83; --g2: #b9a2e0; --g3: #7ccfca; --none: #55534e; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0 0 18px; font-size: 13px; }
+form { display: flex; gap: 8px; flex-wrap: wrap; }
+input[type=text] { flex: 1 1 320px; padding: 11px 13px; font: inherit; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; }
+input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+button { font: inherit; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel);
+  color: var(--ink); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+@media (prefers-color-scheme: dark) { button.primary { color: #10202e; } }
+button:disabled { opacity: .55; cursor: wait; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; align-items: center; }
+.chip { font-size: 13px; padding: 5px 10px; border-radius: 999px; text-align: left; }
+.tag { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-right: 6px; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; }
+section { margin-top: 22px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.verdict { border-left: 5px solid var(--ok); }
+.verdict.dissent { border-left-color: var(--warn); }
+.verdict.disagree { border-left-color: var(--bad); }
+.verdict.abstain { border-left-color: var(--none); }
+.verdict .kind { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.verdict .answer { font-size: 22px; font-weight: 650; margin: 4px 0 6px; overflow-wrap: anywhere; }
+.verdict .resp { color: var(--muted); margin: 0; }
+.bench { margin-top: 10px; font-size: 13px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+.group { margin-bottom: 12px; }
+.group .row { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; }
+.group .row span:first-child { overflow-wrap: anywhere; }
+.bar { height: 8px; border-radius: 4px; background: var(--line); margin: 5px 0 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.small { font-size: 12px; color: var(--muted); }
+.passage { border-left: 4px solid var(--none); padding: 2px 0 2px 12px; margin-bottom: 14px; }
+.passage .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; font-size: 13px; }
+.badge { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.passage p { margin: 5px 0 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.passage p.clip { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.passage mark { background: transparent; color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; }
+.more { background: none; border: 0; padding: 0; color: var(--accent); font-size: 12px; }
+.slider { display: grid; grid-template-columns: 108px 1fr 38px; gap: 8px; align-items: center; font-size: 13px; margin-bottom: 6px; }
+.slider input { width: 100%; accent-color: var(--accent); }
+.slider output { text-align: right; font-variant-numeric: tabular-nums; }
+.note { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+.err { color: var(--bad); }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent);
+  border-radius: 50%; animation: s 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes s { to { transform: rotate(360deg); } }
+.conflict { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.conflict.counts { border-left: 4px solid var(--bad); }
+.conflict.ignored { border-left: 4px solid var(--none); opacity: .8; }
+.conflict .vs { font-weight: 650; overflow-wrap: anywhere; }
+.conflict .vs span { color: var(--muted); font-weight: 400; margin: 0 6px; }
+.matrix { border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; width: 100%; }
+.matrix th, .matrix td { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+.matrix th { font-weight: 600; color: var(--muted); }
+.matrix th.claim { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.matrix td.self { outline: 2px solid var(--ink); outline-offset: -2px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+.scroll { overflow-x: auto; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Conflict-Aware RAG</h1>
+  <p class="sub" id="info">Loading…</p>
+
+  <form id="form">
+    <input type="text" id="q" placeholder="Ask a factual question, e.g. who wrote take me home country roads" autocomplete="off" autofocus>
+    <button class="primary" id="ask" type="submit">Ask</button>
+    <button id="search" type="button" title="Show matching passages without running the LLM">Search corpus</button>
+  </form>
+  <div class="chips" id="chips"></div>
+  <p class="note" id="status" hidden></p>
+
+  <section id="result" hidden>
+    <div class="card verdict" id="verdict"></div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card">
+        <p class="label">Retrieved evidence</p>
+        <div id="passages"></div>
+      </div>
+      <div>
+        <div class="card">
+          <p class="label">Competing claims</p>
+          <div id="groups"></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <p class="label">Conflicts detected</p>
+          <div id="conflicts"></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <p class="label">What if you trusted sources differently?</p>
+          <div id="sliders"></div>
+          <div class="slider" style="margin-top:12px"><span>Decision margin</span>
+            <input type="range" id="margin" min="0" max="0.6" step="0.02"><output id="marginOut"></output></div>
+          <p class="note">Moving a slider re-runs only the arbitration on the evidence already collected, so it is instant. The answer shown is then the templated verdict, not LLM-written.</p>
+          <button id="reset" type="button" style="margin-top:10px">Reset trust</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="matrixSec" hidden>
+    <div class="card">
+      <p class="label">How the conflicts arise: every passage checked against every claim (NLI)</p>
+      <div class="scroll"><table class="matrix" id="matrix"></table></div>
+      <div class="legend">
+        <span><i style="background:var(--ok)"></i>passage supports the claim</span>
+        <span><i style="background:var(--bad)"></i>passage contradicts the claim</span>
+        <span><i style="border:2px solid var(--ink)"></i>a passage checked against its own claim (verification)</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="hits" hidden>
+    <div class="card"><p class="label">Matching passages (no LLM)</p><div id="hitlist"></div></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COLORS = ['var(--g0)', 'var(--g1)', 'var(--g2)', 'var(--g3)'];
+const SCEN = {no_conflict: 'no conflict', balanced_conflict: 'balanced conflict', misinfo_single: 'misinformation', misinfo_majority: 'misinformation ×2'};
+let info = null, current = null, timer = null;
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)} : {});
+  const j = await r.json();
+  if (j && j.error) throw new Error(j.error);
+  return j;
+}
+function status(html, isErr) { const s = $('status'); s.hidden = !html; s.innerHTML = html || ''; s.className = 'note' + (isErr ? ' err' : ''); }
+function busy(on) { $('ask').disabled = on; $('search').disabled = on; }
+
+function highlight(text, claim) {
+  const t = esc(text);
+  if (!claim) return t;
+  const c = esc(claim), i = t.toLowerCase().indexOf(c.toLowerCase());
+  return i < 0 ? t : t.slice(0, i) + '<mark>' + t.slice(i, i + c.length) + '</mark>' + t.slice(i + c.length);
+}
+
+function render(d, fromSliders) {
+  const a = d.arbitration, groupOf = {};
+  a.groups.forEach((g, gi) => g.members.forEach(m => groupOf[m] = gi));
+
+  let kind = 'Answer', cls = '';
+  if (a.decision === 'disagree') { kind = 'Sources disagree'; cls = 'disagree'; }
+  else if (a.decision === 'abstain') { kind = 'No verified evidence'; cls = 'abstain'; }
+  else if (a.conflict) { kind = 'Answer, with a weaker conflicting claim'; cls = 'dissent'; }
+  let bench = '';
+  if (d.benchmark) {
+    const b = d.benchmark;
+    bench = `<div class="bench"><span class="tag">benchmark question · ${esc(SCEN[b.scenario] || b.scenario)}</span>` +
+      `correct answer: <b>${esc(b.gold.join(' / '))}</b>` + (b.planted ? ` · planted wrong answer: <b>${esc(b.planted)}</b>` : '') + '</div>';
+  }
+  $('verdict').className = 'card verdict ' + cls;
+  $('verdict').innerHTML = `<div class="kind">${kind}${fromSliders ? ' · with your trust settings' : ''}</div>` +
+    `<div class="answer">${esc(d.answer || '—')}</div><p class="resp">${esc(d.response || '')}</p>${bench}`;
+
+  $('groups').innerHTML = a.groups.length ? a.groups.map((g, gi) =>
+    `<div class="group"><div class="row"><span>${esc(g.answer)}</span><span>${g.support.toFixed(2)}</span></div>` +
+    `<div class="bar"><i style="width:${Math.round(100 * g.support)}%;background:${COLORS[gi % 4]}"></i></div>` +
+    `<div class="small">${esc(g.sources.join(', '))} · doc ${g.members.map(m => m + 1).join(', ')}</div></div>`).join('') +
+    (a.conflict ? `<div class="small">Margin between the top two: ${a.margin.toFixed(2)} (needs ${Number($('margin').value).toFixed(2)} to pick a side)</div>` : '')
+    : '<div class="small">No passage was verified to state an answer.</div>';
+
+  const conf = a.conflicts || [];
+  const gname = gi => a.groups[gi] ? a.groups[gi].answer : '?';
+  let ch = conf.map(c => {
+    const [x, y] = c.groups, [ca, cb] = c.claims;
+    const why = c.reason === 'NLI contradiction'
+      ? `NLI: passage [${ca + 1}] and passage [${cb + 1}] contradict each other (p = ${c.nli_contradiction.toFixed(2)})`
+      : `Different answers that NLI cannot reconcile (compatibility ${c.compatibility.toFixed(2)}, contradiction ${c.nli_contradiction.toFixed(2)})`;
+    return `<div class="conflict ${c.counts ? 'counts' : 'ignored'}"><div class="vs">${esc(gname(x))}<span>vs</span>${esc(gname(y))}</div>` +
+      `<div class="small">${why}</div>` +
+      `<div class="small">${c.counts ? (x === 0 && y === a.rival ? 'Used in the verdict: margin ' + a.margin.toFixed(2) : 'Conflict between lower-ranked claims') : esc(c.note || 'ignored')}</div></div>`;
+  }).join('');
+  const off = d.passages.map((p, i) => p.off_subject ? i + 1 : null).filter(Boolean);
+  if (off.length) ch += `<div class="conflict ignored"><div class="small">Same-question check: passage${off.length > 1 ? 's' : ''} [${off.join('], [')}] ` +
+    `${off.length > 1 ? 'are' : 'is'} about a different subject, so ${off.length > 1 ? 'their claims were' : 'its claim was'} set aside before the verdict.</div></div>`;
+  $('conflicts').innerHTML = ch || '<div class="small">No conflicting claims among the retrieved passages.</div>';
+
+  const mx = d.matrix;
+  if (mx && mx.claims.length) {
+    const colGroup = mx.claims.map(i => groupOf[i]);
+    let t = '<tr><th>passage</th>' + mx.claims.map((i, k) => `<th class="claim" title="${esc(mx.labels[k])}" style="color:${colGroup[k] === undefined ? 'var(--muted)' : COLORS[colGroup[k] % 4]}">claim of [${i + 1}]<br>${esc(mx.labels[k])}</th>`).join('') + '</tr>';
+    t += d.passages.map((p, j) => '<tr><th>[' + (j + 1) + '] ' + esc(p.source) + '</th>' + mx.claims.map((i, k) => {
+      const e = mx.entail[j][k], c = mx.contra[j][k];
+      if (e === null) return '<td>·</td>';
+      const v = Math.max(e, c), col = e >= c ? 'var(--ok)' : 'var(--bad)';
+      const bg = v < 0.3 ? 'transparent' : `color-mix(in srgb, ${col} ${Math.round(15 + 55 * v)}%, transparent)`;
+      return `<td class="${i === j ? 'self' : ''}" style="background:${bg}" title="entail ${e.toFixed(2)} · contradict ${c.toFixed(2)}">${e >= c ? '✓ ' + e.toFixed(2) : '✗ ' + c.toFixed(2)}</td>`;
+    }).join('') + '</tr>').join('');
+    $('matrix').innerHTML = t; $('matrixSec').hidden = false;
+  } else { $('matrixSec').hidden = true; }
+
+  $('passages').innerHTML = d.passages.map((p, i) => {
+    const gi = groupOf[i], color = gi === undefined ? 'var(--none)' : COLORS[gi % 4];
+    let claim = '<span class="small">no claim</span>';
+    if (p.claim) claim = gi === undefined
+      ? `<span class="small">claim “${esc(p.claim)}” <i>ignored</i> (${p.off_subject ? 'about a different subject' : p.verified !== null && p.verified < 0.3 ? 'not supported by its passage' : 'passage off-topic'})</span>`
+      : `<span>says <b style="color:${color}">${esc(p.claim)}</b></span>`;
+    return `<div class="passage" style="border-left-color:${color}"><div class="meta"><b>[${i + 1}]</b>` +
+      `<span class="badge">${esc(p.source)} · trust ${p.reliability.toFixed(2)}</span>${claim}</div>` +
+      `<p class="clip">${highlight(p.text, p.claim)}</p><button class="more" type="button">show more</button></div>`;
+  }).join('');
+  document.querySelectorAll('.more').forEach(b => b.onclick = () => {
+    const p = b.previousElementSibling; p.classList.toggle('clip'); b.textContent = p.classList.contains('clip') ? 'show more' : 'show less';
+  });
+}
+
+function buildSliders(d) {
+  const sources = [...new Set(d.passages.map(p => p.source))];
+  $('sliders').innerHTML = sources.map(s => {
+    const v = d.passages.find(p => p.source === s).reliability;
+    return `<div class="slider"><span>${esc(s)}</span><input type="range" min="0" max="1" step="0.05" value="${v}" data-src="${esc(s)}" data-def="${v}"><output>${v.toFixed(2)}</output></div>`;
+  }).join('');
+  $('margin').value = info.margin; $('marginOut').textContent = Number(info.margin).toFixed(2);
+  document.querySelectorAll('#sliders input, #margin').forEach(el => el.oninput = () => {
+    el.nextElementSibling.textContent = Number(el.value).toFixed(2);
+    clearTimeout(timer); timer = setTimeout(rearbitrate, 120);
+  });
+}
+
+async function rearbitrate() {
+  if (!current) return;
+  const reliability = {};
+  document.querySelectorAll('#sliders input').forEach(el => reliability[el.dataset.src] = Number(el.value));
+  try { render(await api('/api/rearbitrate', {id: current.id, reliability, margin: Number($('margin').value)}), true); status(''); }
+  catch (e) { status(esc(e.message), true); }
+}
+
+async function ask(question) {
+  $('q').value = question; busy(true); $('hits').hidden = true;
+  status('<span class="spin"></span>Retrieving, extracting claims, checking for contradictions…');
+  try {
+    current = await api('/api/ask', {question});
+    buildSliders(current); render(current, false); $('result').hidden = false; status('');
+  } catch (e) { status(esc(e.message), true); }
+  busy(false);
+}
+
+async function search() {
+  const q = $('q').value.trim(); if (!q) return;
+  busy(true); status('<span class="spin"></span>Searching…');
+  try {
+    const hits = await api('/api/search?q=' + encodeURIComponent(q));
+    $('hitlist').innerHTML = hits.length ? hits.map((h, i) =>
+      `<div class="passage"><div class="meta"><b>[${i + 1}]</b><span class="badge">${esc(h.source)}</span><span class="small">relevance ${h.relevance}</span></div><p>${esc(h.text)}</p></div>`).join('')
+      : '<div class="small">Nothing matched.</div>';
+    $('hits').hidden = false; $('result').hidden = true; $('matrixSec').hidden = true; status('');
+  } catch (e) { status(esc(e.message), true); }
+  busy(false);
+}
+
+async function loadExamples() {
+  try {
+    const ex = await api('/api/examples');
+    $('chips').innerHTML = '<span class="tag">try</span>' + ex.map(e =>
+      `<button class="chip" type="button" data-q="${esc(e.question)}" title="${esc(SCEN[e.scenario] || e.scenario)}">${esc(e.question)}</button>`).join('') +
+      '<button class="chip" type="button" id="shuffle">↻ more</button>';
+    document.querySelectorAll('.chip[data-q]').forEach(b => b.onclick = () => ask(b.dataset.q));
+    $('shuffle').onclick = loadExamples;
+  } catch (e) { /* examples are optional */ }
+}
+
+$('form').onsubmit = e => { e.preventDefault(); const q = $('q').value.trim(); if (q) ask(q); };
+$('search').onclick = search;
+$('reset').onclick = () => {
+  document.querySelectorAll('#sliders input').forEach(el => { el.value = el.dataset.def; el.nextElementSibling.textContent = Number(el.value).toFixed(2); });
+  $('margin').value = info.margin; $('marginOut').textContent = Number(info.margin).toFixed(2);
+  if (current) render(current, false);
+};
+(async () => {
+  try {
+    info = await api('/api/info');
+    $('info').textContent = `${info.passages.toLocaleString()} Wikipedia passages · ${info.generator || 'no LLM'} · answers only from retrieved documents, and says when sources contradict each other`;
+  } catch (e) { $('info').textContent = 'Server not reachable.'; }
+  loadExamples();
+  const q0 = new URLSearchParams(location.search).get('q');  // shareable links: /?q=...
+  if (q0) ask(q0);
+})();
+</script>
+</body>
+</html>
